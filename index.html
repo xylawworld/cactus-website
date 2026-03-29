@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cactus — Architecture Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────────── */
+:root {
+  --bg:      #0d0d0b;
+  --bg2:     #141412;
+  --bg3:     #1a1a17;
+  --text:    #f2ede4;      /* 13.5:1 on --bg  ✓ AAA */
+  --sub:     #b8b3a8;      /* 6.8:1  on --bg  ✓ AA  */
+  --muted:   #8a8680;      /* 4.6:1  on --bg  ✓ AA  */
+  --accent:  #c8a96e;      /* 4.8:1  on --bg  ✓ AA  */
+  --accent2: #e8c98d;      /* 7.9:1  on --bg  ✓ AAA — used on dark bg text */
+  --border:  rgba(255,255,255,0.09);
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
+  --ease: cubic-bezier(0.25,0.46,0.45,0.94);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;font-size:16px;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-weight:300;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+img{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;border:none;background:none;font:inherit;}
+
+
+
+/* ─── CURSOR ─────────────────────────────────────────── */
+#cur,#cur2{
+  position:fixed;top:-100px;left:-100px;pointer-events:none;
+  z-index:8000;border-radius:50%;opacity:0;transition:opacity .3s;
+}
+#cur{width:8px;height:8px;background:var(--accent2);margin:-4px 0 0 -4px;}
+#cur2{width:34px;height:34px;border:1px solid rgba(200,169,110,.5);margin:-17px 0 0 -17px;transition:left .12s var(--ease),top .12s var(--ease),opacity .3s;}
+
+/* ─── NAV ────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:26px 48px;
+  transition:background .4s,padding .4s,border-color .4s;
+  border-bottom:1px solid transparent;
+}
+nav.scrolled{
+  background:rgba(13,13,11,.93);backdrop-filter:blur(14px);
+  padding:16px 48px;border-color:var(--border);
+}
+.nav-logo{
+  font-family:var(--serif);font-size:22px;font-weight:400;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--text);
+  flex-shrink:0;
+}
+.nav-logo span{color:var(--accent2);}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{
+  font-size:11.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--sub);transition:color .25s;
+}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{
+  font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  background:var(--accent);color:#0d0d0b;padding:10px 22px;
+  transition:background .25s;font-weight:500;
+}
+.nav-cta:hover{background:var(--accent2);}
+
+/* hamburger */
+.hamburger{
+  display:none;flex-direction:column;gap:5px;
+  width:26px;padding:4px 0;background:none;border:none;cursor:pointer;
+}
+.hamburger span{display:block;height:1px;background:var(--text);transition:all .3s;}
+
+/* mobile drawer */
+.mobile-menu{
+  display:none;position:fixed;inset:0;background:var(--bg);z-index:490;
+  flex-direction:column;justify-content:center;align-items:center;gap:32px;
+  opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;
+}
+.mobile-menu.open{opacity:1;visibility:visible;}
+.mobile-menu a{
+  font-family:var(--serif);font-size:clamp(32px,7vw,52px);font-weight:300;
+  color:var(--text);letter-spacing:.06em;transition:color .25s;
+}
+.mobile-menu a:hover{color:var(--accent2);}
+.mobile-close{
+  position:absolute;top:28px;right:28px;
+  font-size:28px;color:var(--sub);background:none;border:none;cursor:pointer;
+}
+
+/* ─── HERO ───────────────────────────────────────────── */
+.hero{
+  position:relative;height:100dvh;min-height:560px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 48px 60px;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  /* ↓ HERO IMAGE — replace this URL to change the hero background photo */
+  background:url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=2000&q=85&auto=format&fit=crop') center/cover no-repeat;
+  transform:scale(1.07);transition:transform 7s var(--ease);will-change:transform;
+}
+.hero-bg.loaded{transform:scale(1);}
+.hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(13,13,11,.88) 0%,rgba(13,13,11,.35) 55%,rgba(13,13,11,.18) 100%);
+}
+.hero-content{
+  position:relative;z-index:2;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+}
+.hero-title{
+  font-family:var(--serif);
+  font-size:clamp(56px,9.5vw,130px);
+  font-weight:300;line-height:.88;letter-spacing:-.02em;
+  max-width:min(720px,65vw);
+  color:var(--text);
+}
+.hero-title em{font-style:italic;color:var(--accent2);}
+.hero-right{
+  display:flex;flex-direction:column;align-items:flex-end;gap:22px;padding-bottom:6px;
+}
+.hero-tagline{
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--sub);max-width:190px;text-align:right;line-height:1.9;
+}
+.hero-scroll{
+  display:flex;align-items:center;gap:14px;
+  font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--sub);
+}
+.scroll-line{width:48px;height:1px;background:rgba(255,255,255,.2);position:relative;overflow:hidden;}
+.scroll-line::after{
+  content:'';position:absolute;left:-100%;top:0;width:100%;height:100%;
+  background:var(--accent2);animation:scan 2.2s ease-in-out infinite;
+}
+@keyframes scan{0%{left:-100%}50%{left:100%}100%{left:100%}}
+
+/* ─── MARQUEE ────────────────────────────────────────── */
+.marquee-wrap{
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:17px 0;overflow:hidden;background:var(--bg2);
+}
+.marquee-track{
+  display:flex;gap:56px;white-space:nowrap;
+  animation:marquee 28s linear infinite;
+}
+.marquee-item{
+  display:flex;align-items:center;gap:16px;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--sub);flex-shrink:0;
+}
+.marquee-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─── SECTION UTILITIES ──────────────────────────────── */
+.section{padding:110px 48px;}
+.section-label{
+  font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--accent2);margin-bottom:18px;
+  display:flex;align-items:center;gap:14px;
+}
+.section-label::before{content:'';width:28px;height:1px;background:var(--accent);}
+
+/* ─── ABOUT ──────────────────────────────────────────── */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.about-heading{
+  font-family:var(--serif);font-weight:300;line-height:1.04;
+  font-size:clamp(40px,5.2vw,74px);margin-bottom:32px;color:var(--text);
+}
+.about-heading em{font-style:italic;color:var(--accent2);}
+.about-text{color:var(--sub);line-height:1.95;margin-bottom:20px;max-width:480px;font-size:15px;}
+.about-stats{
+  display:flex;gap:44px;margin-top:44px;padding-top:36px;
+  border-top:1px solid var(--border);flex-wrap:wrap;
+}
+.stat-num{
+  font-family:var(--serif);font-size:clamp(40px,4.5vw,56px);
+  font-weight:300;color:var(--text);line-height:1;display:block;
+}
+.stat-label{
+  font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--sub);margin-top:5px;display:block;
+}
+.about-img-wrap{position:relative;height:560px;overflow:hidden;}
+.about-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease);}
+.about-img-wrap:hover img{transform:scale(1.04);}
+.about-img-tag{
+  position:absolute;bottom:24px;left:24px;
+  background:var(--bg);padding:16px 20px;border-left:2px solid var(--accent);
+}
+.about-img-tag p{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);}
+.about-img-tag strong{display:block;font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text);margin-top:3px;}
+
+/* ─── SERVICES ───────────────────────────────────────── */
+.services-section{background:var(--bg2);}
+.services-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:60px;gap:32px;flex-wrap:wrap;}
+.services-heading{
+  font-family:var(--serif);font-weight:300;line-height:1.04;
+  font-size:clamp(36px,4.8vw,66px);max-width:500px;color:var(--text);
+}
+.services-heading em{font-style:italic;color:var(--accent2);}
+.services-desc{max-width:310px;color:var(--sub);line-height:1.85;font-size:14px;}
+.services-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;}
+.service-card{
+  padding:44px 28px;background:var(--bg);border:1px solid var(--border);
+  position:relative;overflow:hidden;transition:transform .4s var(--ease),background .4s;
+}
+.service-card::after{
+  content:'';position:absolute;bottom:0;left:0;width:100%;height:2px;
+  background:var(--accent);transform:scaleX(0);transform-origin:left;
+  transition:transform .4s var(--ease);
+}
+.service-card:hover{background:#1a1a17;transform:translateY(-4px);}
+.service-card:hover::after{transform:scaleX(1);}
+.service-num{
+  font-family:var(--serif);font-size:44px;font-weight:300;
+  color:rgba(255,255,255,.07);line-height:1;margin-bottom:28px;
+  transition:color .4s;
+}
+.service-card:hover .service-num{color:rgba(200,169,110,.12);}
+.service-name{font-family:var(--serif);font-size:21px;font-weight:400;margin-bottom:14px;color:var(--text);}
+.service-desc{font-size:13px;color:var(--sub);line-height:1.85;}
+.service-arrow{
+  margin-top:28px;font-size:18px;color:var(--accent2);
+  display:block;transition:transform .3s;
+}
+.service-card:hover .service-arrow{transform:translateX(6px);}
+
+/* ─── PORTFOLIO ──────────────────────────────────────── */
+.portfolio-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:44px;gap:24px;flex-wrap:wrap;
+}
+.portfolio-heading{
+  font-family:var(--serif);font-weight:300;line-height:1.04;
+  font-size:clamp(36px,4.8vw,66px);color:var(--text);
+}
+.portfolio-heading em{font-style:italic;color:var(--accent2);}
+.view-all{
+  font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--sub);
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);padding-bottom:4px;
+  transition:color .3s,border-color .3s;white-space:nowrap;
+}
+.view-all:hover{color:var(--accent2);border-color:var(--accent);}
+
+.portfolio-grid{display:grid;grid-template-columns:1.42fr 1fr;grid-template-rows:auto auto;gap:14px;}
+.project-card{position:relative;overflow:hidden;}
+.project-card:first-child{grid-row:span 2;height:660px;}
+.project-card:not(:first-child){height:320px;}
+.project-img{width:100%;height:100%;object-fit:cover;transition:transform .72s var(--ease);}
+.project-card:hover .project-img{transform:scale(1.06);}
+.project-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(13,13,11,.82) 0%,transparent 55%);
+  opacity:0;transition:opacity .4s;
+}
+.project-card:hover .project-overlay{opacity:1;}
+.project-info{
+  position:absolute;bottom:26px;left:26px;right:26px;
+  transform:translateY(12px);opacity:0;transition:transform .4s var(--ease),opacity .4s;
+}
+.project-card:hover .project-info{transform:translateY(0);opacity:1;}
+.project-cat{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent2);margin-bottom:5px;}
+.project-name{font-family:var(--serif);font-size:24px;font-weight:300;color:var(--text);margin-bottom:3px;}
+.project-loc{font-size:12px;color:var(--sub);letter-spacing:.1em;}
+.project-tag{
+  position:absolute;top:22px;right:22px;background:rgba(13,13,11,.75);
+  padding:5px 13px;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--sub);backdrop-filter:blur(8px);
+}
+
+/* ─── PROCESS ────────────────────────────────────────── */
+.process-section{background:var(--bg2);}
+.process-heading{
+  font-family:var(--serif);font-weight:300;line-height:1.04;
+  font-size:clamp(36px,4.8vw,66px);max-width:600px;margin-bottom:64px;color:var(--text);
+}
+.process-heading em{font-style:italic;color:var(--accent2);}
+.process-step{
+  display:grid;grid-template-columns:72px 1fr 1fr;gap:32px;
+  padding:36px 0;border-top:1px solid var(--border);align-items:start;
+  transition:padding-left .3s var(--ease);
+}
+.process-step:last-child{border-bottom:1px solid var(--border);}
+.process-step:hover{padding-left:12px;}
+.step-num{
+  font-family:var(--serif);font-size:38px;font-weight:300;
+  color:rgba(255,255,255,.12);line-height:1;transition:color .3s;
+}
+.process-step:hover .step-num{color:var(--accent);}
+.step-name{font-family:var(--serif);font-size:26px;font-weight:400;line-height:1.2;color:var(--text);}
+.step-desc{font-size:13.5px;color:var(--sub);line-height:1.87;padding-top:4px;}
+
+/* ─── GALLERY STRIP ──────────────────────────────────── */
+.gallery-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  padding:0 48px 80px;
+}
+.gallery-item{height:220px;overflow:hidden;position:relative;}
+.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .65s var(--ease);}
+.gallery-item:hover img{transform:scale(1.07);}
+.gallery-caption{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:10px 14px;background:rgba(13,13,11,.7);backdrop-filter:blur(6px);
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sub);opacity:0;transition:opacity .35s;
+}
+.gallery-item:hover .gallery-caption{opacity:1;}
+
+/* ─── TESTIMONIAL ────────────────────────────────────── */
+.testimonial-section{
+  text-align:center;padding:110px 48px;position:relative;overflow:hidden;
+}
+.t-bg{
+  position:absolute;inset:0;
+  background:url('https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1800&q=70&auto=format&fit=crop') center/cover no-repeat;
+  opacity:.06;
+}
+.t-content{position:relative;z-index:2;max-width:800px;margin:0 auto;}
+.quote-mark{
+  font-family:var(--serif);font-size:100px;line-height:.5;
+  color:var(--accent);opacity:.35;display:block;margin-bottom:20px;
+}
+.t-quote{
+  font-family:var(--serif);font-style:italic;font-weight:300;
+  font-size:clamp(20px,2.8vw,36px);line-height:1.55;
+  color:var(--text);margin-bottom:36px;
+  transition:opacity .3s;
+}
+.t-author{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--sub);}
+.t-author strong{display:block;font-weight:400;color:var(--accent2);margin-bottom:4px;font-family:var(--sans);}
+.t-dots{display:flex;justify-content:center;gap:10px;margin-top:40px;}
+.t-dot{width:26px;height:2px;background:var(--border);cursor:pointer;transition:background .3s;border:none;}
+.t-dot.active{background:var(--accent);}
+.t-dot:focus-visible{outline:2px solid var(--accent2);outline-offset:3px;}
+
+/* ─── CTA SPLIT ──────────────────────────────────────── */
+.cta-split{display:grid;grid-template-columns:1fr 1fr;min-height:400px;}
+.cta-left{
+  background:var(--accent);padding:76px 56px;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.cta-heading{
+  font-family:var(--serif);font-weight:300;line-height:1.1;
+  font-size:clamp(34px,4vw,56px);color:#0d0d0b;
+}
+.cta-heading em{font-style:italic;}
+.cta-link{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#0d0d0b;
+  display:inline-flex;align-items:center;gap:14px;
+  border-bottom:1px solid rgba(13,13,11,.35);padding-bottom:5px;
+  font-weight:500;transition:gap .3s;
+}
+.cta-link:hover{gap:22px;}
+.cta-right{
+  background:var(--bg3);padding:76px 56px;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.cta-right-head{
+  font-family:var(--serif);font-weight:300;
+  font-size:clamp(26px,3vw,40px);margin-bottom:20px;color:var(--text);
+}
+.cta-right p{color:var(--sub);line-height:1.87;font-size:14px;margin-bottom:36px;max-width:380px;}
+.btn-outline{
+  display:inline-flex;align-items:center;gap:12px;
+  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text);border:1px solid var(--border);padding:13px 26px;
+  transition:border-color .3s,color .3s;
+}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2);}
+.cta-base{font-size:11px;color:var(--muted);letter-spacing:.1em;}
+
+/* ─── FOOTER ─────────────────────────────────────────── */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:76px 48px 36px;}
+.footer-top{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:52px;margin-bottom:60px;}
+.footer-brand{font-family:var(--serif);font-size:26px;font-weight:300;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px;color:var(--text);}
+.footer-brand span{color:var(--accent2);}
+.footer-tagline{color:var(--sub);font-size:13px;line-height:1.85;max-width:250px;}
+.footer-col h4{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:22px;}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:12px;}
+.footer-col ul a{color:var(--sub);font-size:14px;transition:color .25s;}
+.footer-col ul a:hover{color:var(--accent2);}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:28px;border-top:1px solid var(--border);flex-wrap:wrap;gap:16px;}
+.footer-copy{font-size:11.5px;color:var(--muted);letter-spacing:.1em;}
+.footer-social{display:flex;gap:22px;}
+.footer-social a{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);transition:color .25s;}
+.footer-social a:hover{color:var(--accent2);}
+
+/* ─── SCROLL REVEAL ──────────────────────────────────── */
+/* Content visible by default — JS enhances with animation */
+.reveal{opacity:1;transform:none;}
+.js-reveal{opacity:0;transform:translateY(36px);transition:opacity .8s var(--ease),transform .8s var(--ease);}
+.js-reveal.in{opacity:1;transform:none;}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+
+/* ─── RESPONSIVE: TABLET 900px ───────────────────────── */
+@media(max-width:900px){
+  nav{padding:22px 24px;}
+  nav.scrolled{padding:14px 24px;}
+  .nav-links,.nav-cta{display:none;}
+  .hamburger{display:flex;}
+  .mobile-menu{display:flex;}
+
+  .hero{padding:0 24px 48px;}
+  .hero-title{font-size:clamp(48px,11vw,80px);max-width:100%;}
+  .hero-right{display:none;}
+
+  .section{padding:80px 24px;}
+  .about-grid{grid-template-columns:1fr;gap:40px;}
+  .about-img-wrap{height:380px;}
+  .services-grid{grid-template-columns:1fr 1fr;gap:2px;}
+  .services-header{flex-direction:column;align-items:flex-start;}
+  .services-desc{max-width:100%;}
+  .portfolio-grid{grid-template-columns:1fr;}
+  .project-card:first-child{height:420px;grid-row:span 1;}
+  .project-card:not(:first-child){height:260px;}
+  .process-step{grid-template-columns:52px 1fr;gap:20px;}
+  .step-desc{display:none;}
+  .gallery-strip{grid-template-columns:1fr 1fr;padding:0 24px 60px;}
+  .cta-split{grid-template-columns:1fr;}
+  .cta-left,.cta-right{padding:56px 24px;}
+  .footer-top{grid-template-columns:1fr 1fr;gap:36px;}
+  footer{padding:60px 24px 32px;}
+  .testimonial-section{padding:80px 24px;}
+}
+
+/* ─── RESPONSIVE: MOBILE 600px ───────────────────────── */
+@media(max-width:600px){
+  .hero-title{font-size:clamp(40px,13vw,64px);}
+  .services-grid{grid-template-columns:1fr;}
+  .gallery-strip{grid-template-columns:1fr;padding:0 24px 48px;}
+  .gallery-item{height:200px;}
+  .about-stats{gap:28px;}
+  .footer-top{grid-template-columns:1fr;}
+  .portfolio-header{flex-direction:column;align-items:flex-start;}
+  .process-step{grid-template-columns:44px 1fr;}
+  .footer-bottom{flex-direction:column;align-items:flex-start;}
+}
+
+/* ─── FOCUS STYLES (ACCESSIBILITY) ──────────────────── */
+:focus-visible{outline:2px solid var(--accent2);outline-offset:3px;}
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cur" aria-hidden="true"></div>
+<div id="cur2" aria-hidden="true"></div>
+
+<!-- NAV -->
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-logo" aria-label="Cactus home">C<span>actus</span></a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="projects.html">Projects</a></li>
+  </ul>
+  <a href="contact.html" class="nav-cta">Contact Us</a>
+  <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
+  <button class="mobile-close" id="mobileClose" aria-label="Close menu">✕</button>
+  <a href="index.html" class="mob-link">Home</a>
+  <a href="about.html" class="mob-link">About</a>
+  <a href="projects.html" class="mob-link">Projects</a>
+  <a href="contact.html" class="mob-link">Contact Us</a>
+</div>
+
+<!-- HERO -->
+<section class="hero" aria-label="Hero banner">
+  <!--
+  ═══════════════════════════════════════════════════════════
+  HERO BACKGROUND IMAGE — HOW TO CHANGE:
+  1. Upload your photo to imgbb.com → copy the image URL
+  2. Replace the URL inside url('...') below with your URL
+  3. Commit the change on GitHub — your site updates in ~30 sec
+  ═══════════════════════════════════════════════════════════
+  -->
+  <div class="hero-bg" id="heroBg" role="img" aria-label="Modern architectural building facade"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <h1 class="hero-title reveal">
+      Design<br>that <em>endures</em>
+    </h1>
+    <div class="hero-right reveal d2">
+      <p class="hero-tagline">Architecture rooted in purpose, craft, and the future</p>
+      <div class="hero-scroll" aria-hidden="true">
+        <div class="scroll-line"></div>
+        Scroll
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap" aria-hidden="true">
+  <div class="marquee-track">
+    <div class="marquee-item"><span class="marquee-dot"></span>Residential Design</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Urban Planning</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Interior Architecture</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Sustainable Build</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Commercial Spaces</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Landscape Integration</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Cactus Studio — Est. 2018</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Residential Design</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Urban Planning</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Interior Architecture</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Sustainable Build</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Commercial Spaces</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Landscape Integration</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Cactus Studio — Est. 2018</div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section class="section" id="about" aria-labelledby="about-heading">
+  <div class="about-grid">
+    <div>
+      <div class="section-label reveal">Our Story</div>
+      <h2 class="about-heading reveal d1" id="about-heading">
+        Built on <em>vision,</em><br>grounded in craft
+      </h2>
+      <p class="about-text reveal d2">
+        Cactus was founded with a singular goal: to elevate the standards of modern architecture. What began as a small team of forward-thinking designers has grown into a respected studio, known for balancing bold aesthetics with honest functionality.
+      </p>
+      <p class="about-text reveal d2">
+        We design with purpose — every project is an opportunity to improve the world around us. Sustainable practices and cutting-edge materials guide every decision, creating structures that serve the present and respect the future.
+      </p>
+      <div class="about-stats reveal d3">
+        <div>
+          <span class="stat-num">18+</span>
+          <span class="stat-label">Years of practice</span>
+        </div>
+        <div>
+          <span class="stat-num">240</span>
+          <span class="stat-label">Projects built</span>
+        </div>
+        <div>
+          <span class="stat-num">34</span>
+          <span class="stat-label">Awards won</span>
+        </div>
+      </div>
+    </div>
+    <div class="about-img-wrap reveal d2">
+      <!--
+      ═══════════════════════════════════════════════════════════
+      ABOUT SECTION IMAGE — HOW TO CHANGE:
+      1. Upload your photo to imgbb.com → copy the image URL
+      2. Replace the src="..." URL in the <img> tag below
+      3. Update the alt="..." text to describe your new photo
+      4. Commit on GitHub — done!
+      ═══════════════════════════════════════════════════════════
+      -->
+      <img
+        src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=900&q=82&auto=format&fit=crop"
+        alt="Cactus-designed contemporary home with clean geometric lines and large windows"
+        loading="lazy"
+      >
+      <div class="about-img-tag">
+        <p>Featured Project</p>
+        <strong>The Spine House — 2024</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="section services-section" id="services" aria-labelledby="services-heading">
+  <div class="services-header">
+    <div>
+      <div class="section-label reveal">What We Do</div>
+      <h2 class="services-heading reveal d1" id="services-heading">
+        <em>Design</em> services<br>built around you
+      </h2>
+    </div>
+    <p class="services-desc reveal d2">
+      From concept to construction, our integrated studio delivers architecture that is bold in idea and precise in execution.
+    </p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="service-num">01</div>
+      <div class="service-name">Residential Design</div>
+      <p class="service-desc">We create homes as unique as the people who live in them — designed around life, not around convention.</p>
+      <span class="service-arrow" aria-hidden="true">→</span>
+    </div>
+    <div class="service-card reveal d1">
+      <div class="service-num">02</div>
+      <div class="service-name">Commercial Architecture</div>
+      <p class="service-desc">Spaces that define culture and inspire productivity. Workplaces designed to work harder.</p>
+      <span class="service-arrow" aria-hidden="true">→</span>
+    </div>
+    <div class="service-card reveal d2">
+      <div class="service-num">03</div>
+      <div class="service-name">Interior Architecture</div>
+      <p class="service-desc">Personalized, functional environments that reflect your lifestyle and taste through every detail.</p>
+      <span class="service-arrow" aria-hidden="true">→</span>
+    </div>
+    <div class="service-card reveal d3">
+      <div class="service-num">04</div>
+      <div class="service-name">Urban Planning</div>
+      <p class="service-desc">Large-scale design integrating residential, commercial, and public space into livable communities.</p>
+      <span class="service-arrow" aria-hidden="true">→</span>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section class="section" id="projects" aria-labelledby="projects-heading">
+  <div class="portfolio-header">
+    <div>
+      <div class="section-label reveal">Selected Work</div>
+      <h2 class="portfolio-heading reveal d1" id="projects-heading">
+        Our <em>latest</em> projects
+      </h2>
+    </div>
+    <a href="#" class="view-all reveal d2">View all projects →</a>
+  </div>
+  <div class="portfolio-grid">
+    <!--
+    ═══════════════════════════════════════════════════
+    PROJECT 1 IMAGE — replace src="..." URL to change
+    Also update: alt text, project-cat, project-name, project-loc
+    ═══════════════════════════════════════════════════
+    -->
+    <div class="project-card reveal">
+      <img class="project-img"
+        src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1000&q=82&auto=format&fit=crop"
+        alt="The Desert Vault — contemporary desert residence with clean horizontal lines"
+        loading="lazy">
+      <div class="project-overlay" aria-hidden="true"></div>
+      <span class="project-tag">2024</span>
+      <div class="project-info">
+        <p class="project-cat">Residential · Private</p>
+        <h3 class="project-name">The Desert Vault</h3>
+        <p class="project-loc">Scottsdale, Arizona</p>
+      </div>
+    </div>
+    <!--
+    ═══════════════════════════════════════════════════
+    PROJECT 2 IMAGE — replace src="..." URL to change
+    Also update: alt text, project-cat, project-name, project-loc
+    ═══════════════════════════════════════════════════
+    -->
+    <div class="project-card reveal d1">
+      <img class="project-img"
+        src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=900&q=82&auto=format&fit=crop"
+        alt="Glass Meridian — modern glass commercial office building at dusk"
+        loading="lazy">
+      <div class="project-overlay" aria-hidden="true"></div>
+      <span class="project-tag">2024</span>
+      <div class="project-info">
+        <p class="project-cat">Commercial · Office</p>
+        <h3 class="project-name">Glass Meridian</h3>
+        <p class="project-loc">Austin, Texas</p>
+      </div>
+    </div>
+    <!--
+    ═══════════════════════════════════════════════════
+    PROJECT 3 IMAGE — replace src="..." URL to change
+    Also update: alt text, project-cat, project-name, project-loc
+    ═══════════════════════════════════════════════════
+    -->
+    <div class="project-card reveal d2">
+      <img class="project-img"
+        src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=82&auto=format&fit=crop"
+        alt="Tide House — coastal minimalist residence with ocean views"
+        loading="lazy">
+      <div class="project-overlay" aria-hidden="true"></div>
+      <span class="project-tag">2023</span>
+      <div class="project-info">
+        <p class="project-cat">Residential · Coastal</p>
+        <h3 class="project-name">Tide House</h3>
+        <p class="project-loc">Malibu, California</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY STRIP -->
+<div class="gallery-strip" role="region" aria-label="Studio gallery">
+  <div class="gallery-item reveal">
+    <!--
+    GALLERY IMAGE 1 — replace src="..." URL to change
+    Update alt="..." to describe your photo
+    -->
+    <img src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&q=80&auto=format&fit=crop"
+      alt="Minimalist interior with concrete ceiling and large glazed openings" loading="lazy">
+    <div class="gallery-caption">Interior Detail</div>
+  </div>
+  <div class="gallery-item reveal d1">
+    <!--
+    GALLERY IMAGE 2 — replace src="..." URL to change
+    Update alt="..." to describe your photo
+    -->
+    <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80&auto=format&fit=crop"
+      alt="Concrete staircase with dramatic natural lighting from above" loading="lazy">
+    <div class="gallery-caption">Staircase Study</div>
+  </div>
+  <div class="gallery-item reveal d2">
+    <!--
+    GALLERY IMAGE 3 — replace src="..." URL to change
+    Update alt="..." to describe your photo
+    -->
+    <img src="https://images.unsplash.com/photo-1574958269340-fa927503f3dd?w=600&q=80&auto=format&fit=crop"
+      alt="Glass and steel facade of a commercial building at sunset" loading="lazy">
+    <div class="gallery-caption">Facade — Glass Meridian</div>
+  </div>
+  <div class="gallery-item reveal d3">
+    <!--
+    GALLERY IMAGE 4 — replace src="..." URL to change
+    Update alt="..." to describe your photo
+    -->
+    <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80&auto=format&fit=crop"
+      alt="Aerial view of a building with geometric roof pattern and landscaping" loading="lazy">
+    <div class="gallery-caption">Aerial — Roof Study</div>
+  </div>
+</div>
+
+<!-- PROCESS -->
+<section class="section process-section" id="process" aria-labelledby="process-heading">
+  <div class="section-label reveal">How We Work</div>
+  <h2 class="process-heading reveal d1" id="process-heading">
+    A process built on<br><em>collaboration</em>
+  </h2>
+  <div>
+    <div class="process-step reveal">
+      <span class="step-num" aria-hidden="true">01</span>
+      <h3 class="step-name">Discovery &amp; Vision</h3>
+      <p class="step-desc">We begin with deep listening — understanding your life, goals, and the spirit you want to inhabit, before a single line is drawn.</p>
+    </div>
+    <div class="process-step reveal d1">
+      <span class="step-num" aria-hidden="true">02</span>
+      <h3 class="step-name">Concept Design</h3>
+      <p class="step-desc">Our architects develop bold spatial ideas — exploring form, material, light, and landscape through an iterative creative dialogue.</p>
+    </div>
+    <div class="process-step reveal d2">
+      <span class="step-num" aria-hidden="true">03</span>
+      <h3 class="step-name">Refinement &amp; Detail</h3>
+      <p class="step-desc">Every joint, threshold, and surface is considered. We move from concept to construction documents with obsessive precision.</p>
+    </div>
+    <div class="process-step reveal d3">
+      <span class="step-num" aria-hidden="true">04</span>
+      <h3 class="step-name">Build &amp; Delivery</h3>
+      <p class="step-desc">We remain active partners through construction, ensuring every field decision honours the design's original intent.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial-section" aria-label="Client testimonials">
+  <div class="t-bg" aria-hidden="true"></div>
+  <div class="t-content">
+    <span class="quote-mark" aria-hidden="true">"</span>
+    <blockquote class="t-quote reveal" id="quoteText">
+      Working with Cactus was an absolute pleasure. They truly listened to our vision and transformed it into a stunning modern retreat that feels like a sanctuary. Every detail was meticulously crafted.
+    </blockquote>
+    <div class="t-author reveal d1" id="quoteAuthor">
+      <strong>Amara &amp; Daniel Webb</strong>
+      Residential Clients — The Desert Vault, 2024
+    </div>
+    <div class="t-dots" role="tablist" aria-label="Testimonial navigation">
+      <button class="t-dot active" onclick="setQuote(0)" role="tab" aria-selected="true" aria-label="Testimonial 1"></button>
+      <button class="t-dot" onclick="setQuote(1)" role="tab" aria-selected="false" aria-label="Testimonial 2"></button>
+      <button class="t-dot" onclick="setQuote(2)" role="tab" aria-selected="false" aria-label="Testimonial 3"></button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-split" id="contact">
+  <div class="cta-left">
+    <h2 class="cta-heading reveal">Start your <em>project</em> with Cactus</h2>
+    <a href="contact.html" class="cta-link">Book a consultation →</a>
+  </div>
+  <div class="cta-right">
+    <div>
+      <h3 class="cta-right-head reveal">Let's talk about your vision</h3>
+      <p class="reveal d1">We take on a select number of projects each year, giving every client the full focus of our studio. Reach out and let's explore what's possible together.</p>
+      <a href="mailto:hello@cactus.studio" class="btn-outline reveal d2">hello@cactus.studio →</a>
+    </div>
+    <p class="cta-base">Based in Kuala Lumpur · Working worldwide</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">C<span>actus</span></div>
+      <p class="footer-tagline">A forward-thinking architecture studio creating spaces that inspire, endure, and respect the world around them.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Studio</h4>
+      <ul>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="about.html#team">Our Team</a></li>
+        <li><a href="about.html#careers">Careers</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Work</h4>
+      <ul>
+        <li><a href="projects.html">Projects</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="mailto:hello@cactus.studio">hello@cactus.studio</a></li>
+        <li><a href="tel:+60323456789">+60 3 2345 6789</a></li>
+        <li>Kuala Lumpur, MY</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 Cactus Architecture Studio. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+/* ── HERO IMAGE — trigger scale animation immediately ── */
+document.addEventListener('DOMContentLoaded',()=>{
+  const heroBg=document.getElementById('heroBg');
+  if(heroBg) setTimeout(()=>heroBg.classList.add('loaded'),100);
+});
+
+/* ── CURSOR ── */
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0,fx=0,fy=0,cursorActive=false;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+  if(!cursorActive){
+    cursorActive=true;
+    cur.style.opacity='1'; cur2.style.opacity='1';
+    document.body.style.cursor='none';
+  }
+});
+(function tick(){
+  fx+=(mx-fx)*.12; fy+=(my-fy)*.12;
+  cur2.style.left=fx+'px'; cur2.style.top=fy+'px';
+  requestAnimationFrame(tick);
+})();
+
+/* ── NAV SCROLL ── */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>60),{passive:true});
+
+/* ── MOBILE MENU ── */
+const hamburger=document.getElementById('hamburger');
+const mobileMenu=document.getElementById('mobileMenu');
+const mobileClose=document.getElementById('mobileClose');
+function openMenu(){mobileMenu.classList.add('open');hamburger.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';}
+function closeMenu(){mobileMenu.classList.remove('open');hamburger.setAttribute('aria-expanded','false');document.body.style.overflow='';}
+hamburger.addEventListener('click',openMenu);
+mobileClose.addEventListener('click',closeMenu);
+document.querySelectorAll('.mob-link').forEach(l=>l.addEventListener('click',closeMenu));
+
+/* ── SCROLL REVEAL — progressive enhancement ── */
+/* Only hide elements once JS is confirmed running */
+const revealEls=document.querySelectorAll('.reveal');
+revealEls.forEach(el=>el.classList.add('js-reveal'));
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}});
+},{threshold:0.08,rootMargin:'0px 0px -20px 0px'});
+revealEls.forEach(el=>obs.observe(el));
+
+/* ── HERO PARALLAX ── */
+window.addEventListener('scroll',()=>{
+  if(window.scrollY<window.innerHeight)
+    document.getElementById('heroBg').style.transform=`scale(1) translateY(${window.scrollY*.32}px)`;
+},{passive:true});
+
+/* ── TESTIMONIALS ── */
+const quotes=[
+  {t:"Working with Cactus was an absolute pleasure. They truly listened to our vision and transformed it into a stunning modern retreat that feels like a sanctuary. Every detail was meticulously crafted.",a:"Amara &amp; Daniel Webb",r:"Residential Clients — The Desert Vault, 2024"},
+  {t:"The team at Cactus exceeded every expectation. They took our ideas and elevated them to create an office that is both productive and breathtaking. Their attention to detail was extraordinary.",a:"Priya Shankar",r:"Director, Meridian Group — Glass Meridian, 2024"},
+  {t:"We approached Cactus with the challenge of a sustainable coastal home. They delivered a space that meets all our environmental goals while providing a breathtaking retreat for our family.",a:"Marcus &amp; Laila Chen",r:"Residential Clients — Tide House, 2023"}
+];
+let cur_q=0;
+const qText=document.getElementById('quoteText');
+const qAuth=document.getElementById('quoteAuthor');
+const dots=document.querySelectorAll('.t-dot');
+function setQuote(i){
+  cur_q=i;
+  qText.style.opacity=0;qAuth.style.opacity=0;
+  setTimeout(()=>{
+    qText.innerHTML=quotes[i].t;
+    qAuth.innerHTML=`<strong>${quotes[i].a}</strong>${quotes[i].r}`;
+    qText.style.o
