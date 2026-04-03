@@ -909,4 +909,16 @@ function setQuote(i){
   setTimeout(()=>{
     qText.innerHTML=quotes[i].t;
     qAuth.innerHTML=`<strong>${quotes[i].a}</strong>${quotes[i].r}`;
+    qText.style.opacity=1;qAuth.style.opacity=1;
+    dots.forEach((d,j)=>{
+      d.classList.toggle('active',j===i);
+      d.setAttribute('aria-selected',j===i);
+    });
+  },300);
+}
+setInterval(()=>setQuote((cur_q+1)%quotes.length),5000);
+</script>
+</body>
+</html>
+    qAuth.innerHTML=`<strong>${quotes[i].a}</strong>${quotes[i].r}`;
     qText.style.o

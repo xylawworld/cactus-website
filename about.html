@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Cactus Architecture Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS (same as homepage) ──────────────────────── */
+:root{
+  --bg:#0d0d0b;--bg2:#141412;--bg3:#1a1a17;
+  --text:#f2ede4;--sub:#b8b3a8;--muted:#8a8680;
+  --accent:#c8a96e;--accent2:#e8c98d;
+  --border:rgba(255,255,255,0.09);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+  --nav-h:80px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;line-height:1.6;overflow-x:hidden;}
+img{display:block;max-width:100%;height:100%;object-fit:cover;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;border:none;background:none;font:inherit;}
+
+/* ─── CURSOR ─────────────────────────────────────────── */
+#cur,#cur2{position:fixed;top:-100px;left:-100px;pointer-events:none;z-index:8000;border-radius:50%;opacity:0;transition:opacity .3s;}
+#cur{width:8px;height:8px;background:var(--accent2);margin:-4px 0 0 -4px;}
+#cur2{width:34px;height:34px;border:1px solid rgba(200,169,110,.5);margin:-17px 0 0 -17px;transition:left .12s var(--ease),top .12s var(--ease),opacity .3s;}
+
+/* ─── NAV (identical to homepage) ────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:26px 48px;transition:background .4s,padding .4s,border-color .4s;border-bottom:1px solid transparent;}
+nav.scrolled{background:rgba(13,13,11,.93);backdrop-filter:blur(14px);padding:16px 48px;border-color:var(--border);}
+.nav-logo{font-family:var(--serif);font-size:22px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text);flex-shrink:0;}
+.nav-logo span{color:var(--accent2);}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{font-size:11.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--sub);transition:color .25s;}
+.nav-links a:hover{color:var(--text);}
+.nav-links a.active{color:var(--text);}
+.nav-cta{font-size:11px;letter-spacing:.15em;text-transform:uppercase;background:var(--accent);color:#0d0d0b;padding:10px 22px;transition:background .25s;font-weight:500;}
+.nav-cta:hover{background:var(--accent2);}
+.hamburger{display:none;flex-direction:column;gap:5px;width:26px;padding:4px 0;}
+.hamburger span{display:block;height:1px;background:var(--text);transition:all .3s;}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--bg);z-index:490;flex-direction:column;justify-content:center;align-items:center;gap:32px;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;}
+.mobile-menu.open{opacity:1;visibility:visible;}
+.mobile-menu a{font-family:var(--serif);font-size:clamp(32px,7vw,52px);font-weight:300;color:var(--text);letter-spacing:.06em;transition:color .25s;}
+.mobile-menu a:hover{color:var(--accent2);}
+.mobile-close{position:absolute;top:28px;right:28px;font-size:28px;color:var(--sub);}
+
+/* ─── SECTION UTILS ──────────────────────────────────── */
+.section{padding:110px 48px;}
+.section-label{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent2);margin-bottom:18px;display:flex;align-items:center;gap:14px;}
+.section-label::before{content:'';width:28px;height:1px;background:var(--accent);}
+
+/* ─── REVEAL ANIMATION ───────────────────────────────── */
+.reveal{opacity:1;transform:none;}
+.js-reveal{opacity:0;transform:translateY(32px);transition:opacity .8s var(--ease),transform .8s var(--ease);}
+.js-reveal.in{opacity:1;transform:none;}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+
+/* ─── PAGE HERO ──────────────────────────────────────── */
+.page-hero{
+  position:relative;height:70vh;min-height:480px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 48px 60px;overflow:hidden;
+  margin-top:0;
+}
+/*
+════════════════════════════════════════════════════
+ABOUT HERO IMAGE — HOW TO CHANGE:
+1. Upload your photo to imgbb.com → copy the URL
+2. Replace the URL inside url('...') below
+3. Commit on GitHub — done!
+════════════════════════════════════════════════════
+*/
+.page-hero-bg{
+  position:absolute;inset:0;
+  background:url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=2000&q=85&auto=format&fit=crop') center/cover no-repeat;
+}
+.page-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,11,.85) 0%,rgba(13,13,11,.4) 60%,rgba(13,13,11,.2) 100%);}
+.page-hero-content{position:relative;z-index:2;}
+.page-hero-label{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent2);margin-bottom:16px;}
+.page-hero-title{font-family:var(--serif);font-size:clamp(52px,8vw,110px);font-weight:300;line-height:.92;letter-spacing:-.02em;color:var(--text);}
+.page-hero-title em{font-style:italic;color:var(--accent2);}
+
+/* ─── INTRO / MISSION ────────────────────────────────── */
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;}
+.intro-heading{font-family:var(--serif);font-size:clamp(36px,4.5vw,62px);font-weight:300;line-height:1.06;margin-bottom:32px;color:var(--text);}
+.intro-heading em{font-style:italic;color:var(--accent2);}
+.intro-text{color:var(--sub);line-height:1.95;font-size:15px;margin-bottom:18px;}
+.intro-stats{display:flex;gap:40px;margin-top:44px;padding-top:36px;border-top:1px solid var(--border);flex-wrap:wrap;}
+.stat-num{display:block;font-family:var(--serif);font-size:clamp(40px,4vw,54px);font-weight:300;color:var(--text);line-height:1;}
+.stat-label{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--sub);margin-top:4px;}
+.intro-right{padding-top:8px;}
+.intro-pull{font-family:var(--serif);font-size:clamp(22px,2.8vw,34px);font-weight:300;font-style:italic;line-height:1.4;color:var(--text);border-left:2px solid var(--accent);padding-left:28px;margin-bottom:32px;}
+.intro-right p{color:var(--sub);line-height:1.95;font-size:15px;margin-bottom:18px;}
+
+/* ─── VALUES STRIP ───────────────────────────────────── */
+.values-section{background:var(--bg2);}
+.values-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:56px;}
+.value-card{padding:44px 28px;background:var(--bg);border:1px solid var(--border);position:relative;overflow:hidden;transition:transform .4s var(--ease),background .4s;}
+.value-card::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease);}
+.value-card:hover{background:var(--bg3);transform:translateY(-4px);}
+.value-card:hover::after{transform:scaleX(1);}
+.value-num{font-family:var(--serif);font-size:44px;font-weight:300;color:rgba(200,169,110,.35);line-height:1;margin-bottom:24px;}
+.value-name{font-family:var(--serif);font-size:22px;font-weight:400;color:var(--text);margin-bottom:14px;}
+.value-desc{font-size:13px;color:var(--sub);line-height:1.85;}
+
+/* ─── TEAM ───────────────────────────────────────────── */
+.team-heading{font-family:var(--serif);font-size:clamp(36px,4.5vw,62px);font-weight:300;line-height:1.06;margin-bottom:16px;}
+.team-heading em{font-style:italic;color:var(--accent2);}
+.team-sub{color:var(--sub);font-size:15px;line-height:1.8;max-width:520px;margin-bottom:56px;}
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
+.team-card{position:relative;overflow:hidden;cursor:default;}
+.team-img{
+  width:100%;height:480px;overflow:hidden;position:relative;
+}
+.team-img img{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform .7s var(--ease);}
+.team-card:hover .team-img img{transform:scale(1.04);}
+.team-info{padding:24px 0 0;}
+.team-name{font-family:var(--serif);font-size:24px;font-weight:400;color:var(--text);margin-bottom:4px;}
+.team-role{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;}
+.team-bio{font-size:13px;color:var(--sub);line-height:1.8;}
+
+/* ─── PHILOSOPHY / FULL WIDTH IMAGE ──────────────────── */
+.philosophy-section{padding:0;position:relative;}
+.philosophy-img{
+  width:100%;height:580px;overflow:hidden;position:relative;
+}
+/*
+════════════════════════════════════════════════════
+PHILOSOPHY IMAGE — HOW TO CHANGE:
+Replace the src="..." URL in the img tag below
+════════════════════════════════════════════════════
+*/
+.philosophy-img img{width:100%;height:100%;object-fit:cover;transition:transform 8s var(--ease);}
+.philosophy-img:hover img{transform:scale(1.04);}
+.philosophy-overlay{position:absolute;inset:0;background:rgba(13,13,11,.55);}
+.philosophy-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:48px;}
+.philosophy-quote{font-family:var(--serif);font-size:clamp(26px,3.5vw,48px);font-weight:300;font-style:italic;line-height:1.35;color:var(--text);max-width:820px;margin-bottom:20px;}
+.philosophy-attr{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent2);}
+
+/* ─── TIMELINE ───────────────────────────────────────── */
+.timeline-section{background:var(--bg2);}
+.timeline-heading{font-family:var(--serif);font-size:clamp(36px,4.5vw,62px);font-weight:300;line-height:1.06;margin-bottom:56px;}
+.timeline-heading em{font-style:italic;color:var(--accent2);}
+.timeline{display:flex;flex-direction:column;}
+.timeline-item{display:grid;grid-template-columns:120px 1fr 1fr;gap:32px;padding:36px 0;border-top:1px solid var(--border);align-items:start;transition:padding-left .3s;}
+.timeline-item:last-child{border-bottom:1px solid var(--border);}
+.timeline-item:hover{padding-left:12px;}
+.tl-year{font-family:var(--serif);font-size:38px;font-weight:300;color:rgba(255,255,255,.12);line-height:1;transition:color .3s;}
+.timeline-item:hover .tl-year{color:var(--accent);}
+.tl-title{font-family:var(--serif);font-size:24px;font-weight:400;color:var(--text);line-height:1.2;}
+.tl-desc{font-size:13px;color:var(--sub);line-height:1.85;padding-top:4px;}
+
+/* ─── CTA STRIP ──────────────────────────────────────── */
+.cta-strip{display:grid;grid-template-columns:1fr 1fr;}
+.cta-left{background:var(--accent);padding:80px 56px;display:flex;flex-direction:column;justify-content:space-between;min-height:360px;}
+.cta-heading{font-family:var(--serif);font-size:clamp(32px,3.8vw,52px);font-weight:300;color:var(--bg);line-height:1.1;}
+.cta-heading em{font-style:italic;}
+.cta-link{display:inline-flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bg);border-bottom:1px solid rgba(13,13,11,.35);padding-bottom:5px;transition:gap .3s;font-weight:500;}
+.cta-link:hover{gap:22px;}
+.cta-right{background:var(--bg2);padding:80px 56px;display:flex;flex-direction:column;justify-content:center;gap:24px;}
+.cta-right-heading{font-family:var(--serif);font-size:clamp(24px,2.5vw,36px);font-weight:300;color:var(--text);}
+.cta-right p{color:var(--sub);font-size:14px;line-height:1.85;max-width:380px;}
+.btn-outline{display:inline-flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text);border:1px solid rgba(255,255,255,.18);padding:14px 26px;transition:border-color .3s,color .3s;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ─── FOOTER (identical to homepage) ─────────────────── */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:72px 48px 36px;}
+.footer-top{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:52px;margin-bottom:56px;}
+.footer-brand{font-family:var(--serif);font-size:26px;font-weight:300;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px;color:var(--text);}
+.footer-brand span{color:var(--accent2);}
+.footer-tagline{color:var(--sub);font-size:13px;line-height:1.85;max-width:240px;}
+.footer-col h4{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-bottom:22px;}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:11px;}
+.footer-col ul a{color:var(--text);font-size:14px;transition:color .22s;}
+.footer-col ul a:hover{color:var(--accent2);}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:28px;border-top:1px solid var(--border);}
+.footer-copy{font-size:12px;color:var(--muted);letter-spacing:.08em;}
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:900px){
+  nav{padding:22px 24px;}
+  nav.scrolled{padding:14px 24px;}
+  .nav-links,.nav-cta{display:none;}
+  .hamburger{display:flex;}
+  .mobile-menu{display:flex;}
+
+  .page-hero{padding:0 24px 48px;height:60vh;min-height:400px;}
+  .section{padding:80px 24px;}
+
+  .intro-grid{grid-template-columns:1fr;gap:40px;}
+  .intro-pull{font-size:clamp(20px,4vw,28px);}
+
+  .values-grid{grid-template-columns:1fr 1fr;gap:2px;}
+
+  .team-grid{grid-template-columns:1fr 1fr;gap:16px;}
+  .team-img{height:340px;}
+
+  .philosophy-img{height:400px;}
+  .philosophy-quote{font-size:clamp(20px,4vw,32px);}
+
+  .timeline-item{grid-template-columns:80px 1fr;gap:20px;}
+  .tl-desc{display:none;}
+
+  .cta-strip{grid-template-columns:1fr;}
+  .cta-left,.cta-right{padding:56px 28px;min-height:auto;}
+
+  footer{padding:56px 24px 28px;}
+  .footer-top{grid-template-columns:1fr 1fr;gap:32px;}
+}
+
+@media(max-width:600px){
+  .values-grid{grid-template-columns:1fr;}
+  .team-grid{grid-template-columns:1fr;}
+  .team-img{height:380px;}
+  .intro-stats{gap:28px;}
+  .footer-top{grid-template-columns:1fr;}
+  .footer-bottom{flex-direction:column;align-items:flex-start;}
+  .timeline-item{grid-template-columns:64px 1fr;gap:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cur" aria-hidden="true"></div>
+<div id="cur2" aria-hidden="true"></div>
+
+<!-- NAV -->
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-logo">C<span>actus</span></a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html" class="active">About</a></li>
+    <li><a href="projects.html">Projects</a></li>
+  </ul>
+  <a href="contact.html" class="nav-cta">Contact Us</a>
+  <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="Close menu">✕</button>
+  <a href="index.html" class="mob-link">Home</a>
+  <a href="about.html" class="mob-link">About</a>
+  <a href="projects.html" class="mob-link">Projects</a>
+  <a href="contact.html" class="mob-link">Contact Us</a>
+</div>
+
+<!-- ── PAGE HERO ── -->
+<section class="page-hero" aria-label="About hero">
+  <div class="page-hero-bg"></div>
+  <div class="page-hero-overlay"></div>
+  <div class="page-hero-content">
+    <p class="page-hero-label reveal">About Us</p>
+    <h1 class="page-hero-title reveal d1">
+      Architecture<br>with <em>purpose</em>
+    </h1>
+  </div>
+</section>
+
+<!-- ── INTRO / MISSION ── -->
+<section class="section">
+  <div class="intro-grid">
+    <div>
+      <div class="section-label reveal">Who We Are</div>
+      <h2 class="intro-heading reveal d1">
+        Built on <em>vision,</em><br>grounded in craft
+      </h2>
+      <p class="intro-text reveal d2">
+        Cactus was founded with a singular goal — to elevate the standards of modern architecture. What began as a small team of forward-thinking designers has grown into a respected studio, known for balancing bold aesthetics with honest functionality.
+      </p>
+      <p class="intro-text reveal d2">
+        Over the years, we have honed our craft, collaborating with clients across Asia and beyond to create spaces that inspire. Our dedication to sustainability, innovation, and human-centred design guides everything we do.
+      </p>
+      <div class="intro-stats reveal d3">
+        <div>
+          <span class="stat-num">18+</span>
+          <span class="stat-label">Years active</span>
+        </div>
+        <div>
+          <span class="stat-num">240</span>
+          <span class="stat-label">Projects built</span>
+        </div>
+        <div>
+          <span class="stat-num">34</span>
+          <span class="stat-label">Awards won</span>
+        </div>
+      </div>
+    </div>
+    <div class="intro-right reveal d2">
+      <p class="intro-pull">
+        "We design with purpose — every project is an opportunity to improve the world around us."
+      </p>
+      <p>
+        By focusing on sustainable practices and cutting-edge materials, we create structures that serve the present and respect the future. Our passion for innovation is reflected in every detail, ensuring our designs stand the test of time.
+      </p>
+      <p style="margin-top:18px;">
+        We believe in creating spaces that are not only beautiful but also environmentally responsible. By integrating green building practices into every project, we ensure our designs minimise impact on the planet while maximising comfort and well-being.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── VALUES ── -->
+<section class="section values-section">
+  <div class="section-label reveal">What Drives Us</div>
+  <h2 class="intro-heading reveal d1">Our <em>core</em> values</h2>
+  <div class="values-grid">
+    <div class="value-card reveal">
+      <div class="value-num">01</div>
+      <div class="value-name">Sustainability</div>
+      <p class="value-desc">Every design decision is weighed against its environmental impact. We build for the planet as much as for our clients.</p>
+    </div>
+    <div class="value-card reveal d1">
+      <div class="value-num">02</div>
+      <div class="value-name">Precision</div>
+      <p class="value-desc">Obsessive attention to every joint, threshold, and surface. Excellence is not an accident — it is the result of deliberate craft.</p>
+    </div>
+    <div class="value-card reveal d2">
+      <div class="value-num">03</div>
+      <div class="value-name">Innovation</div>
+      <p class="value-desc">We challenge convention and embrace emerging technologies to push the boundaries of what architecture can achieve.</p>
+    </div>
+    <div class="value-card reveal d3">
+      <div class="value-num">04</div>
+      <div class="value-name">Collaboration</div>
+      <p class="value-desc">Great spaces are born from deep listening. We work alongside our clients as partners, not just service providers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── TEAM ── -->
+<section class="section">
+  <div class="section-label reveal">The People</div>
+  <h2 class="team-heading reveal d1">Meet the <em>team</em></h2>
+  <p class="team-sub reveal d2">A diverse group of architects, designers, and thinkers united by a shared passion for spaces that endure.</p>
+  <div class="team-grid">
+
+    <!--
+    ════════════════════════════════════════
+    TEAM MEMBER 1 — HOW TO CHANGE IMAGE:
+    Replace src="..." URL with your photo
+    Upload to imgbb.com to get a free URL
+    ════════════════════════════════════════
+    -->
+    <div class="team-card reveal">
+      <div class="team-img">
+        <img
+          src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=85&auto=format&fit=crop"
+          alt="Nurul Ain Razali — Principal Architect"
+          loading="lazy">
+      </div>
+      <div class="team-info">
+        <h3 class="team-name">Nurul Ain Razali</h3>
+        <p class="team-role">Principal Architect &amp; Founder</p>
+        <p class="team-bio">With over 18 years shaping the built environment across Malaysia and Southeast Asia, Nurul Ain founded Cactus on the belief that architecture should serve both people and planet.</p>
+      </div>
+    </div>
+
+    <!--
+    ════════════════════════════════════════
+    TEAM MEMBER 2 — HOW TO CHANGE IMAGE:
+    Replace src="..." URL with your photo
+    ════════════════════════════════════════
+    -->
+    <div class="team-card reveal d1">
+      <div class="team-img">
+        <img
+          src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&q=85&auto=format&fit=crop"
+          alt="Siti Hajar Mahmud — Design Director"
+          loading="lazy">
+      </div>
+      <div class="team-info">
+        <h3 class="team-name">Siti Hajar Mahmud</h3>
+        <p class="team-role">Design Director</p>
+        <p class="team-bio">Siti Hajar leads the creative vision of the studio, bringing a refined sensibility shaped by her years across Kuala Lumpur and Singapore's most celebrated design practices.</p>
+      </div>
+    </div>
+
+    <!--
+    ════════════════════════════════════════
+    TEAM MEMBER 3 — HOW TO CHANGE IMAGE:
+    Replace src="..." URL with your photo
+    ════════════════════════════════════════
+    -->
+    <div class="team-card reveal d2">
+      <div class="team-img">
+        <img
+          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=85&auto=format&fit=crop"
+          alt="Hafiz Zulkifli — Technical Director"
+          loading="lazy">
+      </div>
+      <div class="team-info">
+        <h3 class="team-name">Hafiz Zulkifli</h3>
+        <p class="team-role">Technical Director</p>
+        <p class="team-bio">Hafiz ensures every design is not only beautiful but structurally sound and buildable — bridging the gap between vision and reality with precision and care.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── PHILOSOPHY FULL WIDTH IMAGE ── -->
+<div class="philosophy-section">
+  <div class="philosophy-img">
+    <!--
+    ════════════════════════════════════════
+    PHILOSOPHY IMAGE — HOW TO CHANGE:
+    Replace src="..." URL with your photo
+    ════════════════════════════════════════
+    -->
+    <img
+      src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=2000&q=85&auto=format&fit=crop"
+      alt="Cactus studio philosophy — architecture with purpose"
+      loading="lazy">
+    <div class="philosophy-overlay"></div>
+    <div class="philosophy-text">
+      <p class="philosophy-quote reveal">
+        "We don't just design buildings. We design the way people experience the world around them."
+      </p>
+      <p class="philosophy-attr reveal d1">— Nurul Ain Razali, Founder</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── TIMELINE ── -->
+<section class="section timeline-section">
+  <div class="section-label reveal">Our Journey</div>
+  <h2 class="timeline-heading reveal d1">
+    A decade of <em>milestones</em>
+  </h2>
+  <div class="timeline">
+    <div class="timeline-item reveal">
+      <span class="tl-year">2006</span>
+      <h3 class="tl-title">Studio Founded</h3>
+      <p class="tl-desc">Wei Lin establishes Cactus Architecture Studio in Kuala Lumpur with a team of three architects and a bold ambition to redefine Malaysian modernism.</p>
+    </div>
+    <div class="timeline-item reveal d1">
+      <span class="tl-year">2010</span>
+      <h3 class="tl-title">First Major Award</h3>
+      <p class="tl-desc">The studio wins the PAM Gold Award for the Riverine Residence — a watershed project that put Cactus on the regional design map.</p>
+    </div>
+    <div class="timeline-item reveal d2">
+      <span class="tl-year">2015</span>
+      <h3 class="tl-title">Regional Expansion</h3>
+      <p class="tl-desc">Cactus opens a second studio in Singapore, expanding its footprint across Southeast Asia and taking on landmark commercial commissions.</p>
+    </div>
+    <div class="timeline-item reveal d3">
+      <span class="tl-year">2019</span>
+      <h3 class="tl-title">Sustainability Pledge</h3>
+      <p class="tl-desc">The studio commits to net-zero carbon across all projects by 2030 — pioneering green building practices across every discipline.</p>
+    </div>
+    <div class="timeline-item reveal d4">
+      <span class="tl-year">2024</span>
+      <h3 class="tl-title">Today</h3>
+      <p class="tl-desc">With over 240 completed projects and a team of 40+ specialists, Cactus continues to shape the built environment across Asia and beyond.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<div class="cta-strip">
+  <div class="cta-left">
+    <h2 class="cta-heading reveal">Start your <em>project</em> with Cactus</h2>
+    <a href="contact.html" class="cta-link">Book a consultation →</a>
+  </div>
+  <div class="cta-right">
+    <h3 class="cta-right-heading reveal">Let's talk about your vision</h3>
+    <p class="reveal d1">We take on a select number of projects each year, giving every client the full focus of our studio. Reach out and let's explore what's possible.</p>
+    <a href="/cdn-cgi/l/email-protection#6f070a0303002f0c0e0c1b1a1c411c1b1a0b0600" class="btn-outline reveal d2"><span class="__cf_email__" data-cfemail="0e666b6262614e6d6f6d7a7b7d207d7a7b6a6761">[email&#160;protected]</span> →</a>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">C<span>actus</span></div>
+      <p class="footer-tagline">A forward-thinking architecture studio creating spaces that inspire, endure, and respect the world around them.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Studio</h4>
+      <ul>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="about.html#team">Our Team</a></li>
+        <li><a href="about.html#careers">Careers</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Work</h4>
+      <ul>
+        <li><a href="projects.html">Projects</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="/cdn-cgi/l/email-protection#a1c9c4cdcdcee1c2c0c2d5d4d28fd2d5d4c5c8ce"><span class="__cf_email__" data-cfemail="18707d747477587b797b6c6d6b366b6c6d7c7177">[email&#160;protected]</span></a></li>
+        <li><a href="tel:+60323456789">+60 3 2345 6789</a></li>
+        <li>Kuala Lumpur, MY</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 Cactus Architecture Studio. All rights reserved.</p>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ── CURSOR ── */
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0,cursorActive=false;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+  if(!cursorActive){
+    cursorActive=true;
+    cur.style.opacity='1';cur2.style.opacity='1';
+    document.body.style.cursor='none';
+  }
+});
+(function tick(){
+  const fx=parseFloat(cur2.style.left)||0,fy=parseFloat(cur2.style.top)||0;
+  cur2.style.left=(fx+(mx-fx)*.12)+'px';
+  cur2.style.top=(fy+(my-fy)*.12)+'px';
+  requestAnimationFrame(tick);
+})();
+
+/* ── NAV ── */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>60),{passive:true});
+
+/* ── MOBILE MENU ── */
+const hamburger=document.getElementById('hamburger');
+const mobileMenu=document.getElementById('mobileMenu');
+const mobileClose=document.getElementById('mobileClose');
+function openMenu(){mobileMenu.classList.add('open');document.body.style.overflow='hidden';}
+function closeMenu(){mobileMenu.classList.remove('open');document.body.style.overflow='';}
+hamburger.addEventListener('click',openMenu);
+mobileClose.addEventListener('click',closeMenu);
+document.querySelectorAll('.mob-link').forEach(l=>l.addEventListener('click',closeMenu));
+
+/* ── SCROLL REVEAL ── */
